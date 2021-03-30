@@ -2,21 +2,27 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace FastResolve
+namespace FastContainer
 {
-    public class FastResolver : IResolver
+    public class FastContainer : IFastContainer
     {
-        private IDictionary<Type, Type> _typeMappers = new ConcurrentDictionary<Type, Type>();
+        private readonly IDictionary<Type, Func<Lazy<object>>> _typeMappers;
 
-        private IBuilder _builder;
+        public FastContainer()
+        {
+            _typeMappers = new ConcurrentDictionary<Type, Func<Lazy<object>>>();
+        }
 
         #region Implementation of IResolver
 
-        public IBuilder Create()
+        public IContainerBuilder For<TSource>()
         {
-            // _builder ??= Builder.Build();
-            // return _builder;
-            return null;
+            throw new NotImplementedException();
+        }
+
+        public IContainerBuilder For(Type from)
+        {
+            throw new NotImplementedException();
         }
 
         public TSource Resolve<TSource>()
@@ -24,48 +30,35 @@ namespace FastResolve
             throw new NotImplementedException();
         }
 
+        public object Resolve(Type typeFrom)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 
-    public class Builder : IBuilder
+    public class ContainerBuilder : IContainerBuilder
     {
-        private readonly IDictionary<Type, Type> _mappers;
-        private readonly IBuilder _builder;
-        private static readonly Func<IDictionary<Type, Type>, IBuilder> LazyBuilder = (types) =>
+        private readonly Type sourceType;
+
+        private static Func<Type, Lazy<object>> CreateInstance = (destinationType) =>
         {
-            var b = new Lazy<IBuilder>(() => new Builder(types));
-            return b.IsValueCreated ? b.Value : default(IBuilder);
+            return new Lazy<object>();
         };
-
-        private Builder(IDictionary<Type, Type> mappers)
+        private ContainerBuilder(Type sourceType)
         {
-            _mappers = mappers;
-            _builder = LazyBuilder(mappers);
-        }
-
-        public static IBuilder Build(IDictionary<Type, Type> mappers)
-        {
-            return LazyBuilder(mappers);
+            this.sourceType = sourceType;
         }
 
         #region Implementation of IBuilder
 
-        public IBuilder For<TSource>()
+        public IContainerBuilder Bind<TDestination>()
         {
             throw new NotImplementedException();
         }
 
-        public IBuilder For(Type from)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IBuilder Use<TDestination>()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IBuilder Use(Type destination)
+        public IContainerBuilder Bind(Type destination)
         {
             throw new NotImplementedException();
         }
@@ -73,17 +66,17 @@ namespace FastResolve
         #endregion
     }
 
-    public interface IResolver
+    public interface IFastContainer
     {
-        IBuilder Create();
+        IContainerBuilder For<TSource>();
+        IContainerBuilder For(Type from);
         TSource Resolve<TSource>();
+        object Resolve(Type typeFrom);
     }
 
-    public interface IBuilder
+    public interface IContainerBuilder
     {
-        IBuilder For<TSource>();
-        IBuilder For(Type from);
-        IBuilder Use<TDestination>();
-        IBuilder Use(Type destination);
+        IContainerBuilder Bind<TDestination>();
+        IContainerBuilder Bind(Type destination);
     }
 }
