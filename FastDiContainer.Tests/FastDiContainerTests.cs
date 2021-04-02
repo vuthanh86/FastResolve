@@ -1,8 +1,9 @@
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace FastDiContainer.Tests
 {
-    public class Tests
+    [TestFixture]
+    public class FastDiContainerTests
     {
         [SetUp]
         public void Setup()

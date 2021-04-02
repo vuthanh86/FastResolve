@@ -56,23 +56,21 @@ namespace FastResolve
         private object Resolve(Type sourceType)
         {
             if (!_mappingTypes.TryGetValue(sourceType, out var resolveFunc))
-                throw new ArgumentException("Not found registered type");
-            
-            return resolveFunc.Invoke();
+                throw new KeyNotFoundException($"Resolve type: {sourceType.Name} error. Type was not found");
+
+            return resolveFunc();
         }
 
         private object CreateInstance(Type sourceType)
         {
             //Getting first constructor of resolved type by reflection
-            var firstConstructor = sourceType.GetConstructors().FirstOrDefault();
-
-            if (firstConstructor == null)
-                throw new ArgumentNullException($"Nulllllll");
+            var firstConstructor = sourceType.GetConstructors().First();
+            
             //Getting first constructor's parameter by reflection
             var constructorParameters = firstConstructor.GetParameters();
 
             //if no parameter found then we dont need to think about other resolved type from the parameter
-            if (!constructorParameters.Any())
+            if (constructorParameters.Length == 0)
                 return Activator.CreateInstance(sourceType); // returning an instance of resolved type
 
             //if our resolved type has constructor then again we have to resolve that types; 
