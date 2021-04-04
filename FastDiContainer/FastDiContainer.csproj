@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <RootNamespace>FastResolve</RootNamespace>
+        <RootNamespace>FastDiContainer</RootNamespace>
     </PropertyGroup>
 
 </Project>

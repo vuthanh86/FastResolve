@@ -3,54 +3,60 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FastResolve
+namespace FastDiContainer
 {
     public interface IFastDiContainer
     {
-        bool IsRegistered<TSource>();
-        bool IsRegistered(Type typeSource);
-        void Register<TSource, TTarget>();
-        void Register(Type sourceType, Type targetType);
-        TSource Resolve<TSource>();
+        bool IsRegistered<T>();
+        void Register<TConcrete, TDerived>() where TDerived : class, TConcrete;
+        T Resolve<T>();
 
     }
     public class FastDiContainer : IFastDiContainer
     {
         private readonly IDictionary<Type, Func<object>> _mappingTypes;
-        
+        private readonly IDictionary<Type, Type> _registerTypes;
+        private readonly IDictionary<Type, Func<object>> _instanceBindings;
+
         public FastDiContainer()
         {
+            _registerTypes = new Dictionary<Type, Type>();
+            _instanceBindings = new Dictionary<Type, Func<object>>();
             _mappingTypes = new ConcurrentDictionary<Type, Func<object>>();
         }
         #region Implementation of IFastDiContainer
 
-        public bool IsRegistered<TSource>()
+        public bool IsRegistered<T>()
         {
-            return IsRegistered(typeof(TSource));
+            return IsRegistered(typeof(T));
         }
 
-        public bool IsRegistered(Type typeSource)
+        private bool IsRegistered(Type type)
         {
+            return _mappingTypes.ContainsKey(type);
+        }
+
+        public void Register<TConcrete, TDerived>() where TDerived : class, TConcrete
+        {
+            Register(concreteType: typeof(TConcrete), derivedType: typeof(TDerived));
+        }
+
+        private void Register(Type concreteType, Type derivedType)
+        {
+            if (!concreteType.IsInterface ||
+                !derivedType.IsClass ||
+                !concreteType.IsAssignableFrom(derivedType))
+                throw new ArgumentException($"{nameof(concreteType)} type was not represented by {derivedType}.");
+
+            if (IsRegistered(derivedType))
+                throw new ArgumentException($"{nameof(derivedType)} already registered.");
             
-            return _mappingTypes.ContainsKey(typeSource);
+            _mappingTypes.Add(concreteType, () => CreateInstance(derivedType));
         }
 
-        public void Register<TSource, TTarget>()
+        public T Resolve<T>()
         {
-            Register(typeof(TSource), typeof(TTarget));
-        }
-
-        public void Register(Type sourceType, Type targetType)
-        {
-            if (IsRegistered(sourceType))
-                return;
-            
-            _mappingTypes.Add(sourceType, () => CreateInstance(sourceType));
-        }
-
-        public TSource Resolve<TSource>()
-        {
-            return (TSource) Resolve(typeof(TSource));
+            return (T) Resolve(typeof(T));
         }
 
         private object Resolve(Type sourceType)
@@ -63,21 +69,14 @@ namespace FastResolve
 
         private object CreateInstance(Type sourceType)
         {
-            //Getting first constructor of resolved type by reflection
-            var firstConstructor = sourceType.GetConstructors().First();
-            
-            //Getting first constructor's parameter by reflection
-            var constructorParameters = firstConstructor.GetParameters();
+            var paramters = sourceType.GetConstructors()
+                .OrderByDescending(c => c.GetParameters().Count())
+                .First()
+                .GetParameters()
+                .Select(p => Resolve(p.ParameterType))
+                .ToArray();
 
-            //if no parameter found then we dont need to think about other resolved type from the parameter
-            if (constructorParameters.Length == 0)
-                return Activator.CreateInstance(sourceType); // returning an instance of resolved type
-
-            //if our resolved type has constructor then again we have to resolve that types; 
-            //so again we are calling our resolve method to resolve from constructor
-            IList<object> parameterList = constructorParameters.Select(parameterToResolve => Resolve(parameterToResolve.ParameterType)).ToList();
-            //invoking parameters to constructor
-            return firstConstructor.Invoke(parameterList.ToArray());
+            return Activator.CreateInstance(sourceType, paramters);
         }
 
         #endregion
