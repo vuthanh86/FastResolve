@@ -37,6 +37,13 @@ namespace FastDiContainer.Tests
     [TestFixture]
     public class FastDiContainerTests
     {
+        public void TestFlow()
+        {
+            // var containerBuilder = new ContainerBuilder();
+            // containerBuilder.Register<TImplement>().Instance();
+            // containerBuilder.Register<TService, TImplement>().Singleton();
+            // var c = containerBuilder.Build();
+        }
         [Test]
         public void RegisterTest()
         {

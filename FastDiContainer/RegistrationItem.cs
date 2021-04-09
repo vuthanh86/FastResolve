@@ -5,6 +5,21 @@ namespace FastDiContainer
 {
     public class RegistrationItem : IEquatable<RegistrationItem>
     {
+        public RegistrationItem(Type concreteType, Type derivedType, LifeTime lifeTime = LifeTime.Instance)
+        {
+            ConcreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
+            DerivedType = derivedType ?? throw new ArgumentNullException($"{nameof(derivedType)} can not be null.");
+            LifeTime = lifeTime;
+        }
+
+        public Type ConcreteType { get; }
+
+        public Type DerivedType { get; }
+
+        public LifeTime LifeTime { get; }
+
+        public object DerivedObject { get; set; }
+
         #region Equality members
 
         public override bool Equals(object obj)
@@ -15,27 +30,13 @@ namespace FastDiContainer
             return Equals((RegistrationItem) obj);
         }
 
-        #endregion
-
-        public RegistrationItem(Type concreteType, Type derivedType)
-        {
-            ConcreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
-            DerivedType = derivedType ?? throw new ArgumentNullException($"{nameof(derivedType)} can not be null.");
-        }
-
-        public Type ConcreteType { get; }
-
-        public Type DerivedType { get; }
-        //
-        // public string ItemKey => $"{nameof(_concreteType)}>{nameof(_derivedType)}";
-
-        #region Equality members
-
         public bool Equals(RegistrationItem other)
         {
             if (ReferenceEquals(null, other)) return false;
 
-            if (ReferenceEquals(this, other)) return true;
+            if (!ReferenceEquals(ConcreteType, other.ConcreteType)) return false;
+
+            if (!ReferenceEquals(DerivedType, other.DerivedType)) return false;
 
             return ConcreteType == other.ConcreteType && DerivedType == other.DerivedType;
         }

@@ -9,6 +9,7 @@ namespace FastDiContainer
     {
         bool IsRegistered<T>();
         void Register<TConcrete, TDerived>() where TDerived : class, TConcrete;
+        void Register<TDerived>() where TDerived : class;
         T Resolve<T>();
 
     }
@@ -16,12 +17,10 @@ namespace FastDiContainer
     {
         private readonly IDictionary<Type, Func<object>> _mappingTypes;
         private readonly IDictionary<Type, Type> _registerTypes;
-        private readonly IDictionary<Type, Func<object>> _instanceBindings;
 
         public FastDiContainer()
         {
             _registerTypes = new Dictionary<Type, Type>();
-            _instanceBindings = new Dictionary<Type, Func<object>>();
             _mappingTypes = new ConcurrentDictionary<Type, Func<object>>();
         }
         #region Implementation of IFastDiContainer
@@ -33,25 +32,30 @@ namespace FastDiContainer
 
         private bool IsRegistered(Type type)
         {
-            return _mappingTypes.ContainsKey(type);
+            return _registerTypes.ContainsKey(type) || _mappingTypes.ContainsKey(type);
         }
 
         public void Register<TConcrete, TDerived>() where TDerived : class, TConcrete
         {
-            Register(concreteType: typeof(TConcrete), derivedType: typeof(TDerived));
+            if (ReferenceEquals(null, typeof(TConcrete)) || ReferenceEquals(null, typeof(TDerived)))
+                throw new ArgumentNullException($"{nameof(TConcrete)}/{nameof(TDerived)} can not be null");
+
+            if (_registerTypes.ContainsKey(typeof(TConcrete)) && _mappingTypes.ContainsKey(typeof(TDerived)))
+                throw new ArgumentException($"{typeof(TDerived)} already registered.");
+
+            _registerTypes[typeof(TConcrete)] = typeof(TDerived);
+
+            Register(key: typeof(TDerived), instanceFunc: () => CreateInstance(typeof(TDerived)));
         }
 
-        private void Register(Type concreteType, Type derivedType)
+        public void Register<TDerived>() where TDerived : class
         {
-            if (!concreteType.IsInterface ||
-                !derivedType.IsClass ||
-                !concreteType.IsAssignableFrom(derivedType))
-                throw new ArgumentException($"{nameof(concreteType)} type was not represented by {derivedType}.");
+            throw new NotImplementedException();
+        }
 
-            if (IsRegistered(derivedType))
-                throw new ArgumentException($"{nameof(derivedType)} already registered.");
-            
-            _mappingTypes.Add(concreteType, () => CreateInstance(derivedType));
+        private void Register(Type key, Func<object> instanceFunc)
+        {
+            _mappingTypes.Add(key, instanceFunc);
         }
 
         public T Resolve<T>()
@@ -61,22 +65,31 @@ namespace FastDiContainer
 
         private object Resolve(Type sourceType)
         {
-            if (!_mappingTypes.TryGetValue(sourceType, out var resolveFunc))
-                throw new KeyNotFoundException($"Resolve type: {sourceType.Name} error. Type was not found");
+            if (_registerTypes.TryGetValue(sourceType, out var targetType))
+            {
+                if (_mappingTypes.TryGetValue(targetType, out var instanceFunc))
+                {
+                    return instanceFunc();
+                }
+            }
+            else  if (_mappingTypes.TryGetValue(sourceType, out var instanceFunc))
+            {
 
-            return resolveFunc();
+                return instanceFunc();
+            }
+            throw new Exception($"Resolve type: {sourceType.Name} error. Type was not found");
         }
 
-        private object CreateInstance(Type sourceType)
+        private object CreateInstance(Type targetType)
         {
-            var paramters = sourceType.GetConstructors()
+            var parameters = targetType.GetConstructors()
                 .OrderByDescending(c => c.GetParameters().Count())
                 .First()
                 .GetParameters()
                 .Select(p => Resolve(p.ParameterType))
                 .ToArray();
 
-            return Activator.CreateInstance(sourceType, paramters);
+            return Activator.CreateInstance(targetType, parameters);
         }
 
         #endregion
