@@ -2,3 +2,5 @@
 */obj
 */bin
 /*.user
+.vscode/launch.json
+.vscode/tasks.json

@@ -1,4 +1,5 @@
 ﻿using System;
+using FastDiContainer.Interfaces;
 using NUnit.Framework;
 
 namespace FastDiContainer.Tests
@@ -37,13 +38,18 @@ namespace FastDiContainer.Tests
     [TestFixture]
     public class FastDiContainerTests
     {
-        public void TestFlow()
+        [Test]
+        public void FastDiContainerTDD()
         {
-            // var containerBuilder = new ContainerBuilder();
-            // containerBuilder.Register<TImplement>().Instance();
-            // containerBuilder.Register<TService, TImplement>().Singleton();
-            // var c = containerBuilder.Build();
+            var containerBuilder = new ContainerBuilder();
+            containerBuilder.For(null);
+            var container = containerBuilder.Build(null);
+
+            // var service = container.Resolve<IRegistrationType>();
+
+            // Assert.IsAssignableFrom<IRegistrationType>(service);
         }
+
         [Test]
         public void RegisterTest()
         {
@@ -62,12 +68,11 @@ namespace FastDiContainer.Tests
             Assert.True(container.IsRegistered<IFakeService>(), $"{nameof(FakeAService)} was not registered.");
 
             var service = container.Resolve<IFakeService>();
-            Assert.IsAssignableFrom<FakeAService>(service,$"Type of {nameof(service)} is not assignable from {typeof(FakeAService)}");
+            Assert.IsAssignableFrom<FakeAService>(service,
+                $"Type of {nameof(service)} is not assignable from {typeof(FakeAService)}");
 
             var doSomething = service.DoSomething();
             Assert.True(doSomething.Equals(typeof(FakeAService).FullName));
         }
     }
-
-
 }

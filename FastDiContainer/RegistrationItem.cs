@@ -7,18 +7,31 @@ namespace FastDiContainer
     {
         public RegistrationItem(Type concreteType, Type derivedType, LifeTime lifeTime = LifeTime.Instance)
         {
-            ConcreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
-            DerivedType = derivedType ?? throw new ArgumentNullException($"{nameof(derivedType)} can not be null.");
-            LifeTime = lifeTime;
+            _concreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
+            _derivedType = derivedType ?? throw new ArgumentNullException($"{nameof(derivedType)} can not be null.");
+            _lifeTime = lifeTime;
+
         }
 
-        public Type ConcreteType { get; }
+        private readonly Type _concreteType;
 
-        public Type DerivedType { get; }
+        public Type ConcreteType => _concreteType;
 
-        public LifeTime LifeTime { get; }
+        private readonly Type _derivedType;
 
-        public object DerivedObject { get; set; }
+        public Type DerivedType => _derivedType;
+
+        private readonly LifeTime _lifeTime;
+
+        public LifeTime LifeTime => _lifeTime;
+
+        private object _objectInstance;
+
+        public object ObjectInstance
+        {
+            get => _objectInstance;
+            set => _objectInstance = value;
+        }
 
         #region Equality members
 
