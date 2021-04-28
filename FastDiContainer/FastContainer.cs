@@ -5,6 +5,10 @@ namespace FastDiContainer
 {
     public class FastContainer : IScope
     {
+        public FastContainer()
+        {
+
+        }
         public void Dispose()
         {
             throw new NotImplementedException();

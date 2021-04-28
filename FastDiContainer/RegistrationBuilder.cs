@@ -9,6 +9,7 @@ namespace FastDiContainer
 {
     public class RegistrationBuilder : IRegistrationBuilder
     {
+
         private readonly Type _concreteType;
         private Type _registeredType;
         private readonly HashSet<Type> _registerTypes;
@@ -53,7 +54,7 @@ namespace FastDiContainer
 
         private RegistrationType Build()
         {
-
+            return null;
         }
 
         private static Func<IServiceLifeTime, object> CreateInstanceFactory(Type itemType)
