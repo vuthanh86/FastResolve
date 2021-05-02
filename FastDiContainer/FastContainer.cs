@@ -1,22 +1,33 @@
 using System;
+using System.Collections.Generic;
 using FastDiContainer.Interfaces;
 
 namespace FastDiContainer
 {
-    public class FastContainer : IScope
+    public class FastContainer : IFastContainer
     {
-        public FastContainer()
-        {
+        private readonly ContainerLifetime _lifeTime;
+        private readonly Dictionary<Type, Func<IServiceLifeTime, object>> _registeredTypes = new Dictionary<Type, Func<IServiceLifeTime, object>>();
 
+        public FastContainer(Dictionary<Type, Func<IServiceLifeTime, object>> registeredTypes)
+        {
+            _registeredTypes = registeredTypes;
+            _lifeTime = new ContainerLifetime(t => _registeredTypes[t]);
         }
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _lifeTime.Dispose();
         }
 
         public object GetService(Type serviceType)
         {
-            throw new NotImplementedException();
+
+            if (!_registeredTypes.TryGetValue(serviceType, out Func<IServiceLifeTime, object> registeredType))
+            {
+                return null;
+            }
+
+            return registeredType(_lifeTime);
         }
     }
 }

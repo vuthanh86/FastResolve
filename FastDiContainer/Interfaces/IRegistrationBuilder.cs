@@ -2,15 +2,11 @@
 
 namespace FastDiContainer.Interfaces
 {
-    public interface IRegistrationBuilder
+    public interface IRegistration
     {
-        IRegistrationBuilder Bind(Type aliasType);
-        IRegistrationBuilder Bind<T>();
-        IRegistrationBuilder BindSelf();
-        IRegistrationBuilder WithNamed(string name);
-        IRegistrationBuilder SingleInstance();
+        void SingleInstance();
 
-        IRegistrationBuilder PerScope();
+        void PerScope();
     }
 
 }
