@@ -14,6 +14,9 @@ namespace FastDiContainer
             _registeredTypes = registeredTypes;
             _lifeTime = new ContainerLifetime(t => _registeredTypes[t]);
         }
+
+        public int TotalRegisteredService => _registeredTypes.Count;
+
         public void Dispose()
         {
             _lifeTime.Dispose();
@@ -28,6 +31,16 @@ namespace FastDiContainer
             }
 
             return registeredType(_lifeTime);
+        }
+
+        public bool IsRegistered<T>()
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Resolve<T>()
+        {
+            throw new NotImplementedException();
         }
     }
 }

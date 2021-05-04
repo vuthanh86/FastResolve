@@ -5,8 +5,10 @@ namespace FastDiContainer.Interfaces
 {
     public interface IContainerBuilder
     {
-        IContainerBuilder For(Type concreteType);
-        IContainerBuilder For<T>();
+        IContainerBuilder RegisterFor(Type registerType);
+        IContainerBuilder RegisterFor<T>();
+        IRegistration As(Type aliasType);
+        IRegistration As<T>();
         IFastContainer Build();
     }
 }

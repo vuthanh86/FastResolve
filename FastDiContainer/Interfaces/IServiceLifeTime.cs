@@ -9,6 +9,9 @@ namespace FastDiContainer.Interfaces
 
     public interface IFastContainer : IScope
     {
+        int TotalRegisteredService { get; }
+        bool IsRegistered<T>();
+        T Resolve<T>();
 
     }
     public interface IServiceLifeTime : IScope

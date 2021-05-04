@@ -1,5 +1,4 @@
 ﻿using System;
-using FastDiContainer.Interfaces;
 using NUnit.Framework;
 
 namespace FastDiContainer.Tests
@@ -41,9 +40,9 @@ namespace FastDiContainer.Tests
         [Test]
         public void FastDiContainerTDD()
         {
-            var containerBuilder = new ContainerBuilder();
-            containerBuilder.For(null);
-            var container = containerBuilder.Build(null);
+            // var containerBuilder = new ContainerBuilder();
+            // containerBuilder.For(null);
+            // var container = containerBuilder.Build(null);
 
             // var service = container.Resolve<IRegistrationType>();
 

@@ -10,25 +10,40 @@ namespace FastDiContainer
     public class ContainerBuilder : IContainerBuilder
     {
         private readonly Dictionary<Type, Func<IServiceLifeTime, object>> _registeredFactory = new Dictionary<Type, Func<IServiceLifeTime, object>>();
-        private Type _concreteType;
+        private Type _registerType;
+        private IList<Type> _aliasType;
 
-
-        public IContainerBuilder For(Type concreteType)
+        public ContainerBuilder()
         {
-            _concreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
+            _aliasType = new List<Type>();
+        }
+
+        public IContainerBuilder RegisterFor(Type registerType)
+        {
+            _registerType = registerType ?? throw new ArgumentNullException($"{nameof(registerType)} can not be null.");
             return this;
         }
 
-        public IContainerBuilder For<T>()
+        public IContainerBuilder RegisterFor<T>()
         {
-            var concreteType = typeof(T);
-            _concreteType = concreteType ?? throw new ArgumentNullException($"{nameof(concreteType)} can not be null.");
+            var type = typeof(T);
+            _registerType = type ?? throw new ArgumentNullException($"{nameof(type)} can not be null.");
             return this;
         }
 
-        public IRegistration Bind(Type itemType)
+        public IRegistration As(Type aliasType)
         {
-            return Register(_concreteType, CreateInstanceFactory(itemType));
+            VerifyRecord(aliasType);
+
+            var r = Register(_registerType, CreateInstanceFactory(aliasType));
+
+            return r;
+        }
+
+        public IRegistration As<T>()
+        {
+            var itemType = typeof(T);
+            return As(itemType);
         }
 
         public IFastContainer Build()
@@ -69,5 +84,14 @@ namespace FastDiContainer
                 arg).Compile();
         }
 
+        private void VerifyRecord(Type aliasType)
+        {
+            if (_registerType is null
+                || aliasType is null)
+                throw new ArgumentNullException("alias type null");
+
+            if (aliasType.Equals(_registerType))
+                throw new ArgumentException("alias type must not equal registered type");
+        }
     }
 }
