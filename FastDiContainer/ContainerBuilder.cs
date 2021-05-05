@@ -9,18 +9,25 @@ namespace FastDiContainer
 {
     public class ContainerBuilder : IContainerBuilder
     {
-        private readonly Dictionary<Type, Func<IServiceLifeTime, object>> _registeredFactory = new Dictionary<Type, Func<IServiceLifeTime, object>>();
         private Type _registerType;
-        private IList<Type> _aliasType;
+        private Type _aliasType;
+
+        private IRegistration _currentRegisterType;
+        private readonly HashSet<Registration> _registeredType;
 
         public ContainerBuilder()
         {
-            _aliasType = new List<Type>();
+            _registeredType = new HashSet<Registration>();
         }
 
         public IContainerBuilder RegisterFor(Type registerType)
         {
             _registerType = registerType ?? throw new ArgumentNullException($"{nameof(registerType)} can not be null.");
+
+            _currentRegisterType = Register(registerType);
+
+            _registeredType.Add(r);
+
             return this;
         }
 
@@ -33,11 +40,9 @@ namespace FastDiContainer
 
         public IRegistration As(Type aliasType)
         {
-            VerifyRecord(aliasType);
+            _aliasType = aliasType;
 
-            var r = Register(_registerType, CreateInstanceFactory(aliasType));
-
-            return r;
+            return Register(_registerType, _aliasType);
         }
 
         public IRegistration As<T>()
@@ -46,15 +51,28 @@ namespace FastDiContainer
             return As(itemType);
         }
 
-        public IFastContainer Build()
+        public IRegistration AsSelf()
         {
-            var c = new FastContainer(_registeredFactory);
-            return c;
+            _aliasType = _registerType;
+
+            return Register(_registerType);
         }
 
-        private IRegistration Register(Type itemType, Func<IServiceLifeTime, object> factory)
+        public IFastContainer Build()
         {
-            var registerType = new Registration(itemType, f => _registeredFactory[itemType] = f, factory);
+            Dictionary<Type, Func<IServiceLifeTime, object>> finalRegisterItems = new Dictionary<Type, Func<IServiceLifeTime, object>>();
+            if (_registeredType.Count > 0)
+                finalRegisterItems = _registeredType.ToDictionary(k => k.Key as Type, v => v.BuildFactory());
+
+            return new FastContainer(finalRegisterItems);
+        }
+
+        private IRegistration Register(Type itemType, object aliasType = null)
+        {
+            var registerType = new Registration(itemType, aliasType);
+
+            _registeredType.Add(registerType);
+
             return registerType;
         }
 
@@ -82,16 +100,6 @@ namespace FastDiContainer
                             param.ParameterType);
                     })),
                 arg).Compile();
-        }
-
-        private void VerifyRecord(Type aliasType)
-        {
-            if (_registerType is null
-                || aliasType is null)
-                throw new ArgumentNullException("alias type null");
-
-            if (aliasType.Equals(_registerType))
-                throw new ArgumentException("alias type must not equal registered type");
         }
     }
 }
